@@ -63,6 +63,7 @@ const [to, setTo] = useState<null | Square>(null);
                               to: squareRepresentation
                             }
                           }));
+
                         } catch (error) {
                           console.error("Error sending move:", error);
                         }
