@@ -78,7 +78,7 @@
 import React, { useEffect, useState } from "react";
 export const INIT_GAME = "init_game";
 import { ChessBoard } from "../components/ChessBoard.tsx";
-import { Chess, Move } from "chess.js";
+import { Chess, Move, Square } from "chess.js";
 import { useSocket } from "../hooks/useSocket.ts";
 export const GAME_OVER = "game_over";
 export const MOVE = "move";
@@ -89,6 +89,8 @@ export const Game = () => {
   const [error, setError] = useState<string | null>(null);
 
   const socket = useSocket();
+  const [from, setFrom] = useState< null | Square>(null); 
+  
 
   useEffect(() => {
     if (!socket) {
@@ -127,6 +129,7 @@ export const Game = () => {
               const moveResult = chess.move(message.payload);
               if (!moveResult) {
                 throw new Error("Invalid move attempted");
+                setFrom(null);
               }
               
               setBoard(chess.board());
@@ -200,6 +203,8 @@ export const Game = () => {
               setBoard={setBoard} 
               socket={socket} 
               board={board} 
+              from = {from}
+              setFrom = {setFrom}
             />
           </div>
           <div className="col-span-2 bg-green-200 w-full">

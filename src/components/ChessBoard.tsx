@@ -1,92 +1,113 @@
-import {useState} from "react";
+import { useState } from "react";
 import React from "react";
 import { Color, PieceSymbol, Square } from "chess.js";
-import { MOVE } from "../screens/Game.tsx";
+import { Chessboard } from "react-chessboard";
+import { Chess } from 'chess.js';
+
+const MOVE = "move";
+
+
 export const ChessBoard = ({
-  board,
   socket,
   setBoard,
-  chess
+  chess,
 }: {
-  socket: WebSocket,
-  chess: any,
-  setBoard: any
-    board: ({
-        square: Square;
-        type: PieceSymbol;
-        color: Color;
-    } | null)[][];
-    }) => {
+  socket: WebSocket;
+  chess: Chess;
+  setBoard: React.Dispatch<React.SetStateAction<({
+    square: Square;
+    type: PieceSymbol;
+    color: Color;
+  } | null)[][]>>;
+}) => {
 
-        // const [from, setFrom] = useState<null | Square>(null);
-        // const [to, setTo] useState< null | Square > (null);
 const [from, setFrom] = useState< null | Square>(null); 
 const [to, setTo] = useState<null | Square>(null);
 
+  function onDrop(sourceSquare: Square, targetSquare: Square): boolean {
+    const move = chess.move({
+      from: sourceSquare,
+      to: targetSquare,
+      promotion: 'q', 
+    });
+
+    if (move === null) {
+      console.log('Illegal move! The piece will snap back.');
+      return false;
+    }
+
+    console.log("Move successful! Updating board and sending move...");
+    setBoard(chess.board());
+    
+    try {
+      socket.send(
+        JSON.stringify({
+          type: MOVE,
+          payload: {
+            from: sourceSquare,
+            to: targetSquare,
+          },
+        })
+      );
+      console.log("Move sent successfully:", { from: sourceSquare, to: targetSquare });
+    } catch (error) {
+      console.error("Error sending move over WebSocket:", error);
+    }
+    
+    return true;
+  }
+
+  function onSquareClick(square: Square){
+    if(!from){
+      setFrom(square)
+    } else{
+     
+       const move = chess.move({
+      from: from,
+      to: square,
+      promotion: 'q',
+    });
+
+    if (move === null) {
+      console.log('Illegal move! The piece will snap back.');
+      setFrom(null);
+      return false;
+    }
+
+    console.log("Move successful! Updating board and sending move...");
+    setBoard(chess.board());
+    
+    try {
+      socket.send(
+        JSON.stringify({
+          type: MOVE,
+          payload: {
+            from: from,
+            to: to,
+          },
+        })
+      );
+      console.log("Move sent successfully:", { from: from, to: to });
+      setFrom(null)
+      setTo(null)
+    } catch (error) {
+      console.error("Error sending move over WebSocket:", error);
+    }
+  }
+  }
+
   return (
-    <div className="text-white-200">   
-      {board.map((row, i) => {
-        return (
-          <div key={i} className="flex">
-            {row.map((square, j) => {  
-              const squareRepresentation = String.fromCharCode(97 + (j % 8)) + "" + (8-i) as Square;  
-              return ( 
-
-                <div onClick = {
-                    () => {
-                        if(!from) {
-                            setFrom(squareRepresentation);
-                        } else{
-
-                          setFrom(null);
-                          chess.move({
-                            from,
-                            to: squareRepresentation
-                          })
-                          console.log("we are here just befoe setting the board to latest")
-                          setBoard(chess.board());
-                      //  try {
-                          console.log("inside of try block");
-                          
-                          const moveData = {
-                            from,
-                            to: squareRepresentation
-                          };
-                          
-                          console.log("Sending move data:", moveData);
-                          try{
-                            console.log("inside of socket.send try block")
-                          socket.send(JSON.stringify({
-                            type: MOVE,  
-                            payload: {
-                              from,
-                              to: squareRepresentation
-                            }
-                          }));
-
-                        } catch (error) {
-                          console.error("Error sending move:", error);
-                        }
-
- 
-                          }
-                        
-                    }
-                }
-                  key={j}
-                  className={`w-16 h-16 ${
-                    (i + j) % 2 === 0 ? "bg-green-500" : "bg-white"
-                  }`}
-                >
-                  <div className="w-full justify-center flex">
-                    {square ? square.type : ""}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+    <div className="flex justify-center items-center w-full min-h-screen p-4 bg-gray-900 text-white">
+      <div style={{ width: "90vmin", maxWidth: "800px" }}>
+        <Chessboard
+          id="drag-and-drop-board"
+          position={chess.fen()}
+          onPieceDrop={onDrop}
+          onSquareClick={onSquareClick}
+        />
+      </div>
     </div>
   );
 };
+
+export default ChessBoard;
