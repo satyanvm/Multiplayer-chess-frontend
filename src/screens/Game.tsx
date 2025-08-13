@@ -1,77 +1,3 @@
-// import React, { useEffect, useState } from "react";
-// export const INIT_GAME = "init_game";
-// import { ChessBoard } from "../components/ChessBoard.tsx";
-// import { Chess, Move } from "chess.js";
-// import { useSocket } from "../hooks/useSocket.ts";
-// export const GAME_OVER = "game_over";
-// export const MOVE = "move";
-// export const Game = () => {
-//   const [chess, setChess] = useState(new Chess());
-//   const [board, setBoard] = useState(chess.board());
-
-//     const socket = useSocket();
-
-//   useEffect(() => {
-//     if (!socket) {
-//       console.log("returning because of no socket");
-//       return;
-//     }
-
-//     socket.onmessage = (event) => {
-//       const message = JSON.parse(event.data);
-//       console.log("it should message" + message);
-//       switch (message.type) {
-//         case INIT_GAME:
-//           setChess(new Chess());
-//           setBoard(chess.board);
-//           console.log("move mode");
-//           break;
-
-//         case MOVE:
-//           const move = message.payload.move;
-//           chess.move(move); 
-//           setBoard(chess.board());
-//           console.log("move made");
-
-//         case GAME_OVER:
-//           console.log("Game over");
-//           break;
-
-//       }
-//     };
-//   }, [socket]);
-
-//   if (!socket) return <div> 
-//     Connection to socket pending...
-//      </div>;
-
-//   return (
-//     <div className="justify-center flex">
-//       <div className="pt-8 max-w-screen-lg">
-//         <div className="grid grid-cols-6 gap-4 w-full">
-//           <div className="col-span-4 bg-red-200 w-full">
-//             <ChessBoard chess = {chess} setBoard =  {setBoard} socket = {socket} board={board} />
-//           </div>
-//           <div className="col-span-2 bg-green-200 w-full">
-//             <button
-//               onClick={() => {
-//                 socket.send(
-//                   JSON.stringify({
-//                     type: INIT_GAME,
-//                   })
-//                 );
-//               }}
-//               className="bg-green-800"
-//             >   
-//               Play
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
 
 
 
@@ -83,14 +9,23 @@ import { useSocket } from "../hooks/useSocket.ts";
 export const GAME_OVER = "game_over";
 export const MOVE = "move";
 
+export interface chessMove{
+    from: Square;
+  to: Square;
+}
+
 export const Game = () => {
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
   const [error, setError] = useState<string | null>(null);
 
+
+  const [movesWhite, setMovesWhite] = useState<chessMove[]>([]);
+  const [movesBlack, setMovesBlack] = useState<chessMove[]>([]);
   const socket = useSocket();
   const [from, setFrom] = useState< null | Square>(null); 
   
+
 
   useEffect(() => {
     if (!socket) {
@@ -194,7 +129,7 @@ export const Game = () => {
               Dismiss
             </button>
           </div>
-        )}
+        )} 
         
         <div className="grid grid-cols-6 gap-4 w-full">
           <div className="col-span-4 bg-red-200 w-full">
@@ -202,9 +137,8 @@ export const Game = () => {
               chess={chess} 
               setBoard={setBoard} 
               socket={socket} 
-              board={board} 
-              from = {from}
-              setFrom = {setFrom}
+              setMovesWhite={setMovesWhite}
+              setMovesBlack = {setMovesBlack}
             />
           </div>
           <div className="col-span-2 bg-green-200 w-full">
@@ -225,6 +159,24 @@ export const Game = () => {
             >   
               Play
             </button>
+            <div className="flex p-4 gap-8">
+              <div >
+                Black
+                <div>
+                  {movesBlack.map((move, index) => (
+          <li>{move.from} to {move.to}</li>
+        ))}
+        </div>
+              </div>
+              <div>
+              White
+              <div>
+                    {movesWhite.map((move, index) => (
+          <li>{move.from} to {move.to}</li>
+        ))}
+        </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
