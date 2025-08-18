@@ -7,6 +7,7 @@ import "./App.css";
 import { useState } from "react";
 import { Landing } from "./screens/Landing.tsx";
 import { Game } from "./screens/Game.tsx";
+import ChessBoard from "./components/ChessBoard.tsx";
 function App() {
   // const  [count, setCount] = useState(0);
 
@@ -15,7 +16,7 @@ function App() {
       <BrowserRouter> 
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path = "/game" element = {<Game/>}></Route>
+          <Route path = "/game" element = {<ChessBoard/>}></Route>
         </Routes>
       </BrowserRouter>
     </div> 

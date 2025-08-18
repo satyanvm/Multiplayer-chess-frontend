@@ -5,18 +5,6 @@ import { INIT_GAME } from "./Game.tsx";
 
 export function Landing() {
   const navigate = useNavigate();
-    // const socket = useSocket();
-  
-    //     //  useEffect(() => {
-    //     //    if (!socket) {
-    //     //      console.log("returning because of no socket");
-    //     //      return;
-    //     //    }
-    //     //   },[]);
-    //                 if (!socket) {
-    //          console.log("returning because of no socket");
-    //          return;
-    //        }
   return (  
     <div> 
       <div className="flex justify-center">
@@ -35,16 +23,6 @@ export function Landing() {
                 <button onClick = {
                   
                     () => {
-                        //   const socket = useSocket();
-                        // if (!socket) {
-                        //   console.log("returning because of no socket");
-                        //   return;
-                        // }
-                        //               socket.send(
-                        //                 JSON.stringify({
-                        //                   type: INIT_GAME,
-                        //                 })
-                        //               );
                         navigate("/game")
                     }
                 } className=" bg-green-500 hover-bg-green-700 text-2xl text-white font-bold rounded cursor-pointer">
