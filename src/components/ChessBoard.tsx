@@ -3,8 +3,9 @@ import React from "react";
 import { Color, PieceSymbol, Square } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
-import { chessMove, GAME_OVER, INIT_GAME } from "../screens/Game.tsx";
+import { chessMove, GAME_JOINED, GAME_OVER, INIT_GAME } from "../screens/Game.tsx";
 import { useSocket } from "../hooks/useSocket.ts";
+import { useNavigate, useParams } from "react-router-dom";
 
 const MOVE = "move";
 
@@ -18,9 +19,11 @@ export const ChessBoard = ({}) => {
   const [to, setTo] = useState<null | Square>(null);
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
+    const { gameId } = useParams(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!socket) {
+    if (!socket) { 
       console.log("returning because of no socket");
       return;
     }
@@ -30,9 +33,15 @@ export const ChessBoard = ({}) => {
       try {
         const message = JSON.parse(event.data);
         console.log("received message:", message);
-
+        
         switch (message.type) {
-          case INIT_GAME:
+
+          case GAME_JOINED:
+          setBoard(chess.board());
+          navigate(`/game/${message.payload.gameId}`);
+          break;
+          
+         case INIT_GAME:
             try {
               const newChess = new Chess();
               setChess(newChess);
@@ -80,7 +89,6 @@ export const ChessBoard = ({}) => {
             try {
               console.log("Game over");
               setError(null);
-              // Add any game over logic here
             } catch (gameOverError) {
               console.error("Error handling game over:", gameOverError);
               setError("Error ending game");
@@ -89,7 +97,7 @@ export const ChessBoard = ({}) => {
 
           default:
             console.warn("Unknown message type:", message.type);
-        }
+        }  
       } catch (parseError) {
         console.error("Error parsing message:", parseError);
         setError("Failed to parse server message");
@@ -208,7 +216,6 @@ export const ChessBoard = ({}) => {
       <div style={{ width: "90vmin", maxWidth: "800px" }}>
         <div className="justify-center flex">
           <div className="pt-8 max-w-screen-lg">
-            {/* Error display */}
             {error && (
               <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
                 Error: {error}
@@ -231,14 +238,15 @@ export const ChessBoard = ({}) => {
                 />
               </div>
               <div className="col-span-2 bg-green-200 w-full">
-                <button
-                  onClick={() => {
+               {gameId === 'random' && ( <button
+                  onClick={() => {    
                     try {
                       const message = JSON.stringify({
                         type: INIT_GAME,
                       });
                       socket.send(message);
                       setError(null);
+                      
                     } catch (sendError) {
                       console.error(
                         "Error sending init game message:",
@@ -251,13 +259,14 @@ export const ChessBoard = ({}) => {
                 >
                   Play
                 </button>
+               )}
                 <div className="flex p-4 gap-8">
                   <div>
                     Black
                     <div>
                       
 {movesBlack.map((move, index) => (
-  <li key={`black-${index}`}>  {/* Add the key prop here */}
+  <li key={`black-${index}`}> 
     {index + 1}. {move.from} to {move.to}
   </li>
 ))}
@@ -267,7 +276,7 @@ export const ChessBoard = ({}) => {
                     White
                     <div>
 {movesWhite.map((move, index) => (
-  <li key={`white-${index}`}>  {/* And here */}
+  <li key={`white-${index}`}>  
     {index + 1}. {move.from} to {move.to}
   </li>
 ))}

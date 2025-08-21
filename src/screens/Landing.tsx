@@ -23,7 +23,7 @@ export function Landing() {
                 <button onClick = {
                   
                     () => {
-                        navigate("/game")
+                        navigate("/game/random")
                     }
                 } className=" bg-green-500 hover-bg-green-700 text-2xl text-white font-bold rounded cursor-pointer">
                   Play online

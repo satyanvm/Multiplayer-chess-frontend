@@ -1,30 +1,181 @@
-
-
-
 import React, { useEffect, useState } from "react";
 export const INIT_GAME = "init_game";
 import { ChessBoard } from "../components/ChessBoard.tsx";
 import { Chess, Move, Square } from "chess.js";
 import { useSocket } from "../hooks/useSocket.ts";
+import { Navigate, useNavigate } from "react-router-dom";
 export const GAME_OVER = "game_over";
 export const MOVE = "move";
+export const GAME_JOINED = "game_joined";
 
-export interface chessMove{
-    from: Square;
+export interface chessMove {
+  from: Square;
   to: Square;
 }
 
 export const Game = () => {
+  const [chess, setChess] = useState(new Chess());
+  const [board, setBoard] = useState(chess.board());
+  const [error, setError] = useState<string | null>(null);
 
+  const [movesWhite, setMovesWhite] = useState<chessMove[]>([]);
+  const [movesBlack, setMovesBlack] = useState<chessMove[]>([]);
+  const socket = useSocket();
+  const [from, setFrom] = useState<null | Square>(null);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!socket) {
+      console.log("returning because of no socket");
+      return;
+    }
+
+    socket.onmessage = (event) => {
+      console.log("socket.on message is triggered( here before try )");
+      try {
+        const message = JSON.parse(event.data);
+        console.log("received message:", message);
+
+        switch (message.type) {
+          case GAME_JOINED:
+            setBoard(chess.board());
+            navigate(`/game/${message.payload.gameId}`);
+            console.log("here navigate after");
+            break;
+
+          case INIT_GAME:
+            try {
+              const newChess = new Chess();
+              setChess(newChess);
+              setBoard(newChess.board());
+              console.log("Game initialized");
+              setError(null);
+            } catch (initError) {
+              console.error("Error initializing game:", initError);
+              setError("Failed to initialize game");
+            }
+            break;
+
+          case MOVE:
+            try {
+              console.log("the incoming message.payload is  ", message.payload);
+              const move = message.payload;
+              if (!move) {
+                throw new Error("Move data is missing");
+              }
+
+              const moveResult = chess.move(message.payload);
+              if (!moveResult) {
+                throw new Error("Invalid move attempted");
+                setFrom(null);
+              }
+
+              setBoard(chess.board());
+              console.log("Move made successfully:", moveResult);
+              setError(null);
+            } catch (moveError) {
+              console.error("Error making move:", moveError);
+              //@ts-ignore
+              setError(`Move failed: ${moveError.message}`);
+            }
+            break;
+
+          case GAME_OVER:
+            try {
+              console.log("Game over");
+              setError(null);
+            } catch (gameOverError) {
+              console.error("Error handling game over:", gameOverError);
+              setError("Error ending game");
+            }
+            break;
+
+          default:
+            console.warn("Unknown message type:", message.type);
+        }
+      } catch (parseError) {
+        console.error("Error parsing message:", parseError);
+        setError("Failed to parse server message");
+      }
+    };
+
+    socket.onerror = (error) => {
+      console.error("WebSocket error:", error);
+      setError("Connection error occurred");
+    };
+
+    socket.onclose = (event) => {
+      console.log("WebSocket connection closed:", event.code, event.reason);
+      if (event.code !== 1000) {
+        setError("Connection lost unexpectedly");
+      }
+    };
+  }, [socket, chess]);
+
+  if (!socket) return <div>Connection to socket pending...</div>;
 
   return (
-        <div>
-            <ChessBoard 
-
-            />
+    <div className="justify-center flex">
+      <div className="pt-8 max-w-screen-lg">
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            Error: {error}
+            <button
+              onClick={() => setError(null)}
+              className="ml-2 text-sm underline"
+            >
+              Dismiss
+            </button>
           </div>
-  )
+        )}
+
+        <div className="grid grid-cols-6 gap-4 w-full">
+          <div className="col-span-4 bg-red-200 w-full">
+            <ChessBoard />
+          </div>
+          <div className="col-span-2 bg-green-200 w-full">
+            <button
+              onClick={() => {
+                try {
+                  const message = JSON.stringify({
+                    type: INIT_GAME,
+                  });
+                  socket.send(message);
+                  setError(null);
+                } catch (sendError) {
+                  console.error("Error sending init game message:", sendError);
+                  setError("Failed to start game");
+                }
+              }}
+              className="bg-green-800 text-white px-4 py-2 rounded"
+            >
+              Play
+            </button>
+            <div className="flex p-4 gap-8">
+              <div>
+                Black
+                <div>
+                  {movesBlack.map((move, index) => (
+                    <li>
+                      {move.from} to {move.to}
+                    </li>
+                  ))}
+                </div>
+              </div>
+              <div>
+                White
+                <div></div>
+                {movesWhite.map((move, index) => (
+                  <li>
+                    {move.from} to {move.to}
+                  </li>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
-
-
-
