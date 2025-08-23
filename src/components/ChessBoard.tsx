@@ -15,7 +15,7 @@ export const ChessBoard = ({}) => {
   const [movesBlack, setMovesBlack] = useState<chessMove[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [x, setX] = useState<number>(0);
-  const [from, setFrom] = useState<null | Square>(null);
+  const [from, setFrom] = useState<null | Square>(null); 
   const [to, setTo] = useState<null | Square>(null);
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
