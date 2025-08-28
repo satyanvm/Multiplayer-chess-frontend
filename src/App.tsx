@@ -8,6 +8,7 @@ import { useState } from "react";
 import { Landing } from "./screens/Landing.tsx";
 import { Game } from "./screens/Game.tsx";
 import ChessBoard from "./components/ChessBoard.tsx";
+import Login from "./screens/Login.tsx";
 function App() {
   // const  [count, setCount] = useState(0);
 
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path = "/game/:gameId" element = {<ChessBoard/>}></Route>
+          <Route path = "/login" element={<Login/>}/>
         </Routes>
       </BrowserRouter>
     </div> 

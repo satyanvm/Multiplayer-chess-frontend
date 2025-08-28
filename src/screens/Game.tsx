@@ -129,7 +129,7 @@ export const Game = () => {
             </button>
           </div>
         )}
-
+  
         <div className="grid grid-cols-6 gap-4 w-full">
           <div className="col-span-4 bg-red-200 w-full">
             <ChessBoard />

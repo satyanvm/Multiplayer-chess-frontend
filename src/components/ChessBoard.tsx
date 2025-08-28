@@ -8,7 +8,7 @@ import { useSocket } from "../hooks/useSocket.ts";
 import { useNavigate, useParams } from "react-router-dom";
 
 const MOVE = "move";
-
+export const JOIN_ROOM = "join_room"
 export const ChessBoard = ({}) => {
   const socket = useSocket();
   const [movesWhite, setMovesWhite] = useState<chessMove[]>([]);
@@ -38,6 +38,7 @@ export const ChessBoard = ({}) => {
 
           case GAME_JOINED:
           setBoard(chess.board());
+
           navigate(`/game/${message.payload.gameId}`);
           break;
           
@@ -115,6 +116,16 @@ export const ChessBoard = ({}) => {
         setError("Connection lost unexpectedly");
       }
     };
+
+    if(gameId !== 'random'){
+      socket.send(JSON.stringify({
+        type: JOIN_ROOM,
+          payload: {
+            gameId
+          }
+      }))      
+    }
+      
   }, [socket, chess]);
 
   if (!socket) return <div>Connection to socket pending...</div>;
@@ -224,7 +235,7 @@ export const ChessBoard = ({}) => {
                   className="ml-2 text-sm underline"
                 >
                   Dismiss
-                </button>
+                </button> 
               </div>
             )}
 
@@ -245,9 +256,9 @@ export const ChessBoard = ({}) => {
                         type: INIT_GAME,
                       });
                       socket.send(message);
-                      setError(null);
+                       setError(null);
                       
-                    } catch (sendError) {
+                     } catch (sendError) {
                       console.error(
                         "Error sending init game message:",
                         sendError
