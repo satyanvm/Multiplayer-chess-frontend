@@ -1,29 +1,29 @@
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
 import { useRecoilState } from 'recoil';
-import { userAtom } from '../Functionalities/user.ts';
+// import { userAtom } from '../Functionalities/user.ts';
 import React from 'react';
-const BACKEND_URL = 'http://localhost:3000';
-  import.meta.env.VITE_APP_BACKEND_URL ?? 'http://localhost:3000';
+const BACKEND_URL = 'http://localhost:8080';
+  import.meta.env.VITE_APP_BACKEND_URL ?? 'http://localhost:8080';
 
-const Login = () => { 
+const Login = () => {  
   const navigate = useNavigate();
   const guestName = useRef<HTMLInputElement>(null); 
-  const [_, setUser] = useRecoilState(userAtom);  
+  // const [_, setUser] = useRecoilState(userAtom);  
 
-  const loginAsGuest = async () => {
+  const loginAsGuest = async () => { 
     const response = await fetch(`${BACKEND_URL}/auth/guest`, {
-      method: 'POST',
-      headers: {
+      method: 'POST', 
+      headers: { 
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      // credentials: 'include',
       body: JSON.stringify({
         name: (guestName.current && guestName.current.value) || '',
       }),
     });
     const user = await response.json();
-    setUser(user);
+    // setUser(user);
     navigate('/game/random');
   };
 

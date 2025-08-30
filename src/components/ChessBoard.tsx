@@ -117,7 +117,7 @@ export const ChessBoard = ({}) => {
       }
     };
 
-    if(gameId !== 'random'){
+    if(gameId !== 'random' && gameId !== 'login'){
       socket.send(JSON.stringify({
         type: JOIN_ROOM,
           payload: {
