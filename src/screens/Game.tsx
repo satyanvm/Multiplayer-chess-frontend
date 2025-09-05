@@ -39,6 +39,7 @@ export const Game = () => {
 
         switch (message.type) {
           case GAME_JOINED:
+            
             setBoard(chess.board());
             navigate(`/game/${message.payload.gameId}`);
             console.log("here navigate after");

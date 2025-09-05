@@ -6,12 +6,15 @@ import { Chess } from "chess.js";
 import { chessMove, GAME_JOINED, GAME_OVER, INIT_GAME } from "../screens/Game.tsx";
 import { useSocket } from "../hooks/useSocket.ts";
 import { useNavigate, useParams } from "react-router-dom";
+import { useRecoilState } from "recoil";
+import { movesAtom } from "../Functionalities/UserAtoms.ts";
 
 const MOVE = "move";
 export const JOIN_ROOM = "join_room"
-export const ChessBoard = ({}) => {
+export const ChessBoard = ({}) => { 
   const socket = useSocket();
   const [movesWhite, setMovesWhite] = useState<chessMove[]>([]);
+  const [moves, setMoves] = useRecoilState(movesAtom);
   const [movesBlack, setMovesBlack] = useState<chessMove[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [x, setX] = useState<number>(0);
@@ -19,8 +22,36 @@ export const ChessBoard = ({}) => {
   const [to, setTo] = useState<null | Square>(null);
   const [chess, setChess] = useState(new Chess());
   const [board, setBoard] = useState(chess.board());
+  const [fen, setFen] = useState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
     const { gameId } = useParams(); 
   const navigate = useNavigate();
+
+  
+   function isPromoting(chess: Chess, from: Square, to: Square) {
+  if (!from) {
+    return false;
+  }
+
+  const piece = chess.get(from);
+
+  if (piece?.type !== 'p') {
+    return false;
+  }
+
+  if (piece.color !== chess.turn()) {
+    return false;
+  }
+
+  if (!['1', '8'].some((it) => to.endsWith(it))) {
+    return false;
+  }
+
+  return chess
+    .history({ verbose: true })
+    .map((it) => it.to)
+    .includes(to);
+}
+
 
   useEffect(() => {
     if (!socket) { 
@@ -32,19 +63,34 @@ export const ChessBoard = ({}) => {
       console.log("socket.on message is triggered( here before try )");
       try {
         const message = JSON.parse(event.data);
-        console.log("received message:", message);
+        console.log("received message:", message);  
         
         switch (message.type) {
 
           case GAME_JOINED:
-          setBoard(chess.board());
+            
+          console.log("game.joined is triggered here"); 
+          console.log("messages is ", message);
+          // console.log("message.moves is ", message.data.moves);
+          if(message.payload.moves){ 
+            console.log("entered message.moves , it is" + message.payload.moves); 
+          message.payload.moves.map((x: any) => {
+            if (isPromoting(chess, x.from, x.to)) {
+              chess.move({ ...x, promotion: 'q' });
+            } else {
+              chess.move(x);  
+            } 
+          });
+          setMoves(message.payload.moves); 
+          setFen(chess.fen());
+      }  
 
           navigate(`/game/${message.payload.gameId}`);
-          break;
+          break; 
           
          case INIT_GAME:
             try {
-              const newChess = new Chess();
+              const newChess = new Chess();  
               setChess(newChess);
               setBoard(newChess.board());
               console.log("Game initialized");
@@ -55,7 +101,7 @@ export const ChessBoard = ({}) => {
             }
             break;
 
-          case MOVE:
+          case MOVE: 
             try {
               console.log("the incoming message.payload is  ", message.payload);
               const move = message.payload;
@@ -63,7 +109,7 @@ export const ChessBoard = ({}) => {
                 throw new Error("Move data is missing");
               }
 
-              const moveResult = chess.move(message.payload);
+              let moveResult: any = chess.move(message.payload);
               if (!moveResult) {
                 throw new Error("Invalid move attempted");
                 setFrom(null);
@@ -71,10 +117,10 @@ export const ChessBoard = ({}) => {
 
               setBoard(chess.board());
               if(chess.turn() === "b"){
-                      setMovesWhite((prev: any) => [...prev, move]);
+                     moveResult =  setMovesWhite((prev: any) => [...prev, move]);
 
               } else{
-      setMovesBlack((prev: any) => [...prev, move]);
+                     moveResult = setMovesBlack((prev: any) => [...prev, move]);
               }
 
               console.log("Move made successfully:", moveResult);
@@ -117,7 +163,7 @@ export const ChessBoard = ({}) => {
       }
     };
 
-    if(gameId !== 'random' && gameId !== 'login'){
+    if(gameId !== 'random'){
       socket.send(JSON.stringify({
         type: JOIN_ROOM,
           payload: {
@@ -131,6 +177,7 @@ export const ChessBoard = ({}) => {
   if (!socket) return <div>Connection to socket pending...</div>;
 
   function onDrop(sourceSquare: Square, targetSquare: Square): boolean {
+    console.log("ondrop is called here")
     const move = chess.move({
       from: sourceSquare,
       to: targetSquare,
@@ -142,8 +189,8 @@ export const ChessBoard = ({}) => {
     }
 
     console.log("Move successful! Updating board and sending move...");
-    setBoard(chess.board());
-    console.log("the move is ", move);
+    setBoard(chess.board()); 
+    console.log("the move is ", move); 
 
     const isWhiteMove = chess.turn() === "b";
     if (isWhiteMove) {
@@ -155,11 +202,11 @@ export const ChessBoard = ({}) => {
     }
 
     //
-    try {
+    try { 
       if (!socket) {
         console.log("socket is nulll");
-        return false;
-      }
+        return false; 
+      }  
       socket.send(
         JSON.stringify({
           type: MOVE,
@@ -276,21 +323,21 @@ export const ChessBoard = ({}) => {
                     Black
                     <div>
                       
-{movesBlack.map((move, index) => (
-  <li key={`black-${index}`}> 
-    {index + 1}. {move.from} to {move.to}
-  </li>
-))}
+                      {movesBlack.map((move, index) => (
+                        <li key={`black-${index}`}> 
+                          {index + 1}. {move.from} to {move.to}
+                        </li>
+                      ))}
                     </div>
                   </div>
                   <div> 
                     White
                     <div>
-{movesWhite.map((move, index) => (
-  <li key={`white-${index}`}>  
-    {index + 1}. {move.from} to {move.to}
-  </li>
-))}
+                        {movesWhite.map((move, index) => (
+                          <li key={`white-${index}`}>  
+                            {index + 1}. {move.from} to {move.to}
+                          </li>
+                        ))}
                     </div>
                   </div>
                 </div>
