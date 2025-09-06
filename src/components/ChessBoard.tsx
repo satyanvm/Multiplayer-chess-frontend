@@ -62,7 +62,7 @@ export const ChessBoard = ({}) => {
     socket.onmessage = (event) => {
       console.log("socket.on message is triggered( here before try )");
       try {
-        const message = JSON.parse(event.data);
+        const message = JSON.parse(event.data);    
         console.log("received message:", message);  
         
         switch (message.type) {
